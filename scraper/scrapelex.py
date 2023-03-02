@@ -147,7 +147,7 @@ class EURlexScraper:
             eurovoc_classifiers = [
                 classifier.find("a")["href"].split("DC_CODED=")[1].split("&")[0].strip()
                 for classifier in page_classifiers.find("ul").find_all("li")
-                if "DC_CODED=" in classifier.find("a")["href"]
+                if classifier.find("a") and "DC_CODED=" in classifier.find("a")["href"]
             ]
 
         if soup.find("p", {"class": "oj-doc-ti"}) or soup.find(
@@ -498,7 +498,7 @@ class EURlexScraper:
         :param max_retries: max number of retries. Default: 10
         :return: dictionary of document information
         """
-        eurovoc_classifiers, full_text = self.__get_full_document(endpoint, max_retries)
+        _, eurovoc_classifiers, full_text = self.__get_full_document(endpoint, max_retries)
         return {
             "link": endpoint,
             "eurovoc_classifiers": eurovoc_classifiers,
