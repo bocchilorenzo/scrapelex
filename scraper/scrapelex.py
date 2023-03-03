@@ -90,7 +90,9 @@ class EURlexScraper:
         self.document_types = {}
 
         # Types of documents available on EUR-lex in the advanced search form.
-        with open(path.join(path.dirname(path.realpath(__file__)), "searchTypes.txt"), "r") as fp:
+        with open(
+            path.join(path.dirname(path.realpath(__file__)), "searchTypes.txt"), "r"
+        ) as fp:
             for line in fp:
                 splitted_line = line.split("(")
                 self.document_types[
@@ -131,6 +133,15 @@ class EURlexScraper:
         )
         self.__set_cookies()
 
+    def __clean_text(self, text):
+        """
+        Utility function to clean the text
+
+        :param text: text to clean
+        :return: cleaned text
+        """
+        return text.replace("\xa0", " ").replace("’", "'").replace("´", "'")
+
     def __scrape_page(self, page_html):
         """
         Utility function to scrape the needed information from the page
@@ -150,7 +161,12 @@ class EURlexScraper:
                 if classifier.find("a") and "DC_CODED=" in classifier.find("a")["href"]
             ]
 
-        if soup.find("p", {"class": "oj-doc-ti"}) or soup.find(
+        text_element = None
+        texteonly = False
+        if soup.find("div", id="TexteOnly"):
+            text_element = soup.find("div", id="TexteOnly").find("txt_te")
+            texteonly = True
+        elif soup.find("p", {"class": "oj-doc-ti"}) or soup.find(
             "p", {"class": "doc-ti"}
         ):
             text_element = (
@@ -159,31 +175,37 @@ class EURlexScraper:
                 .find("div")
             )
 
-            for child in text_element.findChildren():
-                if child.name == "p":
-                    full_text += (
-                        child.text.strip().replace("\xa0", " ").replace("’", "'") + " "
+        if text_element:
+            if texteonly:
+                full_text += (
+                    self.__clean_text(
+                        soup.find("div", {"id": "document1"})
+                        .find("div", {"class": "tabContent"})
+                        .find("strong")
+                        .text
                     )
+                    + " "
+                )
+
+            for child in text_element.children:
+                if child.name == "p":
+                    full_text += self.__clean_text(child.text) + " "
                 elif child.name == "div":
                     for p in child.find_all("p"):
-                        full_text += (
-                            p.text.strip().replace("\xa0", " ").replace("’", "'") + " "
-                        )
+                        full_text += self.__clean_text(p.text) + " "
                 elif child.name == "table":
                     for tr in child.find_all("tr"):
-                        full_text += (
-                            tr.text.strip().replace("\xa0", " ").replace("’", "'") + " "
-                        )
+                        full_text += self.__clean_text(tr.text) + " "
                 elif child.name == "hr":
                     full_text += "[SEP]"
 
         full_text = full_text.replace("\n", " ")
-        full_text = sub(" +", " ", full_text).rstrip()
         full_text = (
             full_text.split("[SEP]", maxsplit=1)[1].replace("[SEP]", "")
             if len(full_text) > 0 and "[SEP]" in full_text
             else full_text
         )
+        full_text = sub(" +", " ", full_text).strip()
 
         return eurovoc_classifiers, full_text
 
@@ -269,13 +291,7 @@ class EURlexScraper:
         for result in page_results:
             if result.find("h2").find("a", class_="not-linkable-portion"):
                 continue
-            title = (
-                result.find("h2")
-                .find("a")
-                .text.strip()
-                .replace("\xa0", " ")
-                .replace("’", "'")
-            )
+            title = self.__clean_text(result.find("h2").find("a").text.strip())
             doc_id = (
                 result.find("h2")
                 .find("a", class_="title")["href"]
@@ -456,7 +472,9 @@ class EURlexScraper:
                         end = True
                         page = 1
 
-            logging.info(f"Scraped {len(documents[term])} documents for {term}")
+            logging.info(
+                f"Scraping for {term} completed.\n- Documents scraped: {len(documents[term])}\n- Documents without eurovoc classifiers: {len([doc for doc in documents[term] if len(documents[term][doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[term][doc]['eurovoc_classifiers']) for doc in documents[term]])/len(documents[term])}"
+            )
             if save_data:
                 with open(f"{directory}/{dirterm}.json", "w", encoding="utf-8") as fp:
                     json.dump(documents[term], fp, ensure_ascii=False, indent=4)
@@ -498,7 +516,9 @@ class EURlexScraper:
         :param max_retries: max number of retries. Default: 10
         :return: dictionary of document information
         """
-        _, eurovoc_classifiers, full_text = self.__get_full_document(endpoint, max_retries)
+        _, eurovoc_classifiers, full_text = self.__get_full_document(
+            endpoint, max_retries
+        )
         return {
             "link": endpoint,
             "eurovoc_classifiers": eurovoc_classifiers,
@@ -530,6 +550,7 @@ class EURlexScraper:
         :param resume: whether to resume scraping from the last checkpoint. Default: False
         :return: dictionary of documents
         """
+        directory = f"{directory}/{self.lang}"
         makedirs(directory, exist_ok=True)
         self.__set_cookies()
 
@@ -597,6 +618,7 @@ class EURlexScraper:
         :param resume: whether to resume scraping from the last saved year. Default: False
         :return: dictionary of documents
         """
+        directory = f"{directory}/{self.lang}"
         makedirs(directory, exist_ok=True)
         self.__set_cookies()
 
@@ -664,10 +686,9 @@ class EURlexScraper:
                     soup = BeautifulSoup(page_html, "lxml")
                     doc_id = file.split(".html")[0]
                     documents[doc_id] = {
-                        "title": soup.find("p", {"id": "originalTitle"})
-                        .text.strip()
-                        .replace("\xa0", " ")
-                        .replace("’", "'"),
+                        "title": self.__clean_text(
+                            soup.find("p", {"id": "originalTitle"}).text.strip()
+                        ),
                         "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:"
                         + doc_id,
                     }
@@ -675,6 +696,10 @@ class EURlexScraper:
 
                     documents[doc_id]["eurovoc_classifiers"] = eurovoc_classifiers
                     documents[doc_id]["full_text"] = full_text
+
+        tqdm.write(
+            f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
+        )
 
         if save_data:
             with open(

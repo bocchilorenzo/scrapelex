@@ -34,8 +34,3 @@ optional arguments:
   --get_languages       Show the available languages. (default: False)
   --get_years           Show the available years. (default: False)
 ```
-
-## TODO
-
-- [ ] Add year stats, like average number of eurovoc classifiers per document
-- [ ] Add the language in the directory structure
