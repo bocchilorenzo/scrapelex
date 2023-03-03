@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 Clone the repository and run the `main.py` file. The available arguments are:
 
-```bash
+```
 usage: main.py [-h] [--language LANGUAGE] [--year YEAR] [--category CATEGORY] [--save_data] [--save_html] [--resume] [--directory DIRECTORY] [--max_retries MAX_RETRIES] [--log_level LOG_LEVEL] [--get_categories] [--get_languages] [--get_years]
 
 optional arguments:
@@ -34,3 +34,8 @@ optional arguments:
   --get_languages       Show the available languages. (default: False)
   --get_years           Show the available years. (default: False)
 ```
+
+## TODO
+
+- [ ] Add year stats, like average number of eurovoc classifiers per document
+- [ ] Add the language in the directory structure

@@ -206,7 +206,7 @@ class EURlexScraper:
         page_html = ""
         while keep_trying and count < max_retries:
             try:
-                self.r = requests.get(endpoint, timeout=15)
+                self.r = requests.get(endpoint, timeout=120)
             except:
                 logging.error(f"Error fetching page {endpoint}, trying again")
                 count += 1
@@ -245,7 +245,7 @@ class EURlexScraper:
                     sleep(count + 1)
 
         if count >= max_retries:
-            if self.r.status_code != 404:
+            if self.r.status_code and self.r.status_code != 404:
                 logging.error(f"Max retries reached for page {endpoint}")
             if log_errors:
                 with open(
