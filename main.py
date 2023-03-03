@@ -30,10 +30,16 @@ if __name__ == "__main__":
         help="Use a previous checkpoint to resume scraping.",
     )
     parser.add_argument(
+        "--scrape_local",
+        default=False,
+        action="store_true",
+        help="Scrape pages from the local directory instead of the web.",
+    )
+    parser.add_argument(
         "--directory",
         type=str,
         default="./eurlexdata/",
-        help="Directory to save the scraped data.",
+        help="Directory to save the scraped data, or to process in case of local scraping.",
     )
     parser.add_argument(
         "--max_retries",
@@ -81,6 +87,12 @@ if __name__ == "__main__":
     if args.get_years:
         pprint(scraper.get_available_years())
         exit()
+
+    if args.scrape_local:
+        scraper.get_documents_local(
+            directory=args.directory,
+            save_data=args.save_data,
+        )
 
     if args.year == "":
         if args.category == "":
