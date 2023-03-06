@@ -449,6 +449,16 @@ class EURlexScraper:
                     else:
                         end = True
                         page = 1
+
+                    total_pages = (
+                        soup.find("i", class_="fa fa-angle-double-right")
+                        .parent["href"]
+                        .split("&page=")[1]
+                        if soup.find("i", class_="fa fa-angle-double-right")
+                        else page
+                    )
+                    if page % 10 == 0:
+                        logging.info(f"Currently at {page}/{total_pages} pages for {term}...")
                 else:
                     if count < max_retries:
                         logging.error(
