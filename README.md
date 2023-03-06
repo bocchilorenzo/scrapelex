@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-Clone the repository and run the `main.py` file. The available arguments are:
+Clone the repository and run the `main.py` file. By default, if no year or category is given, it will scrape year by year starting from current year - 1 and going back to 1800. The available arguments are:
 
 ```
 usage: main.py [-h] [--language LANGUAGE] [--year YEAR] [--category CATEGORY] [--save_data] [--save_html] [--resume] [--directory DIRECTORY] [--max_retries MAX_RETRIES] [--log_level LOG_LEVEL] [--get_categories] [--get_languages] [--get_years]

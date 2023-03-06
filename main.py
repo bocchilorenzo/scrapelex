@@ -96,7 +96,14 @@ if __name__ == "__main__":
 
     if args.year == "":
         if args.category == "":
-            raise("You must specify at least one year or one category.")
+            documents = scraper.get_documents_by_year(
+                years=[],
+                save_data=args.save_data,
+                save_html=args.save_html,
+                directory=args.directory,
+                resume=args.resume,
+                max_retries=args.max_retries,
+            )
         documents = scraper.get_documents_by_category(
             categories=args.category.split(","),
             save_data=args.save_data,

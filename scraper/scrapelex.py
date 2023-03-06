@@ -79,7 +79,7 @@ class EURlexScraper:
 
         self.year_list = []
 
-        for year in range(datetime.now().year + 1, 1800, -1):
+        for year in range(datetime.now().year - 1, 1800, -1):
             self.year_list.append(str(year))
 
         self.year_list.append("1001")
