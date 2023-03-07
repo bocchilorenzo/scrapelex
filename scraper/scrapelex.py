@@ -397,7 +397,12 @@ class EURlexScraper:
                     + f"&qid={int(datetime.now().timestamp())}"
                     + f"&page={page}"
                 )
-                self.r = requests.get(endpoint)
+                try:
+                    self.r = requests.get(endpoint)
+                except:
+                    logging.error(f"Connection error for {endpoint}, cooling down...")
+                    sleep(60)
+                    continue
                 if self.r.ok:
                     count = 0
                     if save_html:
@@ -458,14 +463,21 @@ class EURlexScraper:
                         else page
                     )
                     if page % 10 == 0:
-                        logging.info(f"Currently at {page}/{total_pages} pages for {term}...")
+                        logging.info(
+                            f"Currently at {page}/{total_pages} pages for {term}..."
+                        )
                 else:
-                    if count < max_retries:
+                    if self.r.status_code == 504:
+                        logging.error(
+                            f"Error fetching page {endpoint}. Status code: {self.r.status_code}, cooldown..."
+                        )
+                        sleep(60)
+                    elif count < max_retries:
                         logging.error(
                             f"Error fetching page {endpoint}. Status code: {self.r.status_code}, trying again"
                         )
                         count += 1
-                        sleep(1)
+                        sleep(count)
                     else:
                         logging.error(
                             f"Error fetching page {endpoint}. Status code: {self.r.status_code}, skipping"
@@ -483,7 +495,9 @@ class EURlexScraper:
                         page = 1
 
             logging.info(
-                f"Scraping for {term} completed.\n- Documents scraped: {len(documents[term])}\n- Documents without eurovoc classifiers: {len([doc for doc in documents[term] if len(documents[term][doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[term][doc]['eurovoc_classifiers']) for doc in documents[term]])/len(documents[term])}"
+                f"Scraping for {term} completed.\n- Documents scraped: {len(documents[term])}\n"
+                f"- Documents without eurovoc classifiers: {len([doc for doc in documents[term] if len(documents[term][doc]['eurovoc_classifiers']) == 0])}\n"
+                f"- Average number of Eurovoc classifiers per document: {sum([len(documents[term][doc]['eurovoc_classifiers']) for doc in documents[term]])/len(documents[term]) if len(documents[term]) > 0 else 0}"
             )
             if save_data:
                 with open(f"{directory}/{dirterm}.json", "w", encoding="utf-8") as fp:
