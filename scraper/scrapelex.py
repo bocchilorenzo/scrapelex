@@ -267,8 +267,7 @@ class EURlexScraper:
                     sleep(count + 1)
 
         if count >= max_retries:
-            if self.r.status_code and self.r.status_code != 404:
-                logging.error(f"Max retries reached for page {endpoint}")
+            logging.error(f"Max retries reached for page {endpoint}")
             if log_errors:
                 with open(
                     path.realpath(path.join(directory, "errors.txt")),
