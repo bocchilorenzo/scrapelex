@@ -93,34 +93,34 @@ if __name__ == "__main__":
             directory=args.directory,
             save_data=args.save_data,
         )
-
-    if args.year == "":
-        if args.category == "":
-            documents = scraper.get_documents_by_year(
-                years=[],
+    else:
+        if args.year == "":
+            if args.category == "":
+                documents = scraper.get_documents_by_year(
+                    years=[],
+                    save_data=args.save_data,
+                    save_html=args.save_html,
+                    directory=args.directory,
+                    resume=args.resume,
+                    max_retries=args.max_retries,
+                )
+            documents = scraper.get_documents_by_category(
+                categories=args.category.split(","),
                 save_data=args.save_data,
                 save_html=args.save_html,
                 directory=args.directory,
                 resume=args.resume,
                 max_retries=args.max_retries,
             )
-        documents = scraper.get_documents_by_category(
-            categories=args.category.split(","),
-            save_data=args.save_data,
-            save_html=args.save_html,
-            directory=args.directory,
-            resume=args.resume,
-            max_retries=args.max_retries,
-        )
-    else:
-        if args.category != "":
-            raise("You can't specify both a category and a year.")
-        documents = scraper.get_documents_by_year(
-            years=args.year.split(","),
-            save_data=args.save_data,
-            save_html=args.save_html,
-            directory=args.directory,
-            resume=args.resume,
-            max_retries=args.max_retries,
-        )
+        else:
+            if args.category != "":
+                raise("You can't specify both a category and a year.")
+            documents = scraper.get_documents_by_year(
+                years=args.year.split(","),
+                save_data=args.save_data,
+                save_html=args.save_html,
+                directory=args.directory,
+                resume=args.resume,
+                max_retries=args.max_retries,
+            )
     

@@ -10,6 +10,7 @@ import gzip
 from tqdm import tqdm
 import languagecodes
 
+
 class EURlexScraper:
     def __init__(self, lang="it", log_level=0):
         """
@@ -73,8 +74,17 @@ class EURlexScraper:
         self.r = requests.Session()
         self.r.headers.update(
             {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:108.0) Gecko/20100101 Firefox/108.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
                 "Accept-Language": f"{self.lang},en-US;q=0.7,en;q=0.3",
+                "Connection": "keep-alive",
+                "DNT": "1",
+                "Host": "eur-lex.europa.eu",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "cross-site",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:110.0) Gecko/20100101 Firefox/110.0",
             }
         )
 
@@ -170,10 +180,9 @@ class EURlexScraper:
             ]
 
         text_element = None
-        texteonly = False
+        consolidated = False
         if soup.find("div", id="TexteOnly"):
             text_element = soup.find("div", id="TexteOnly").find("txt_te")
-            texteonly = True
         elif soup.find("p", {"class": "oj-doc-ti"}) or soup.find(
             "p", {"class": "doc-ti"}
         ):
@@ -182,9 +191,16 @@ class EURlexScraper:
                 .find("div", {"class": "tabContent"})
                 .find("div")
             )
+        elif soup.find("p", {"class": "disclaimer"}):
+            text_element = (
+                soup.find("div", {"id": "document1"})
+                .find("div", {"class": "tabContent"})
+                .find("div")
+            )
+            consolidated = True
 
         if text_element:
-            if texteonly:
+            """ if texteonly:
                 full_text += (
                     self.__clean_text(
                         soup.find("div", {"id": "document1"})
@@ -193,26 +209,49 @@ class EURlexScraper:
                         .text
                     )
                     + " "
-                )
+                ) """
 
+            skip = True
             for child in text_element.children:
                 if child.name == "p":
+                    if consolidated:
+                        if child.has_attr("class"):
+                            if (
+                                "reference" in child["class"]
+                                or "disclaimer" in child["class"]
+                                or "hd-modifiers" in child["class"]
+                                or "arrow" in child["class"]
+                            ):
+                                continue
+                            if "title-doc-first" in child["class"]:
+                                skip = False
+                    if child.has_attr("class"):
+                        if "footnote" in child["class"] or "modref" in child["class"]:
+                            continue
                     full_text += self.__clean_text(child.text) + " "
                 elif child.name == "div":
+                    if consolidated and skip:
+                        continue
                     for p in child.find_all("p"):
                         full_text += self.__clean_text(p.text) + " "
                 elif child.name == "table":
+                    if consolidated and skip:
+                        continue
                     for tr in child.find_all("tr"):
                         full_text += self.__clean_text(tr.text) + " "
                 elif child.name == "hr":
+                    if consolidated and skip:
+                        continue
                     full_text += "[SEP]"
 
         full_text = full_text.replace("\n", " ")
+        full_text = full_text.replace("◄", "")
         full_text = (
             full_text.split("[SEP]", maxsplit=1)[1].replace("[SEP]", "")
             if len(full_text) > 0 and "[SEP]" in full_text
             else full_text
         )
+        full_text = sub("►\D\d+", "", full_text)
         full_text = sub(" +", " ", full_text).strip()
 
         return eurovoc_classifiers, full_text
@@ -716,13 +755,13 @@ class EURlexScraper:
                     page_html = fp.read()
 
                     soup = BeautifulSoup(page_html, "lxml")
-                    doc_id = file.split(".html")[0]
+                    doc_id_generator = file.split(".html")[0].split("-", maxsplit=1)
+                    doc_id = doc_id_generator[1]
                     documents[doc_id] = {
                         "title": self.__clean_text(
                             soup.find("p", {"id": "originalTitle"}).text.strip()
                         ),
-                        "link": "https://eur-lex.europa.eu/legal-content/AUTO/?uri=CELEX:"
-                        + doc_id,
+                        "link": f"https://eur-lex.europa.eu/legal-content/AUTO/?uri={doc_id_generator[0]}:{doc_id}",
                     }
                     eurovoc_classifiers, full_text = self.__scrape_page(page_html)
 
