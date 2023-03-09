@@ -67,7 +67,7 @@ class EURlexScraper:
         self.__validate_languages(lang)
         self.lang = lang
 
-        alpha3 = languagecodes.iso_639_alpha3("it").strip().upper()
+        alpha3 = languagecodes.iso_639_alpha3(self.lang).strip().upper()
         self.base_url = f"https://eur-lex.europa.eu/search.html?SUBDOM_INIT=ALL_ALL&DTS_SUBDOM=ALL_ALL&DTS_DOM=ALL&lang={self.lang}&locale={self.lang}&type=advanced&wh0=andCOMPOSE%3D{alpha3}%2CorEMBEDDED_MANIFESTATION-TYPE%3Dpdf%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfa1a%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfa1b%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfa2a%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfx%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdf1x%3BEMBEDDED_MANIFESTATION-TYPE%3Dhtml%3BEMBEDDED_MANIFESTATION-TYPE%3Dxhtml%3BEMBEDDED_MANIFESTATION-TYPE%3Ddoc%3BEMBEDDED_MANIFESTATION-TYPE%3Ddocx"
         self.base_url_year = f"https://eur-lex.europa.eu/search.html?SUBDOM_INIT=ALL_ALL&DTS_SUBDOM=ALL_ALL&DTS_DOM=ALL&lang={self.lang}&locale={self.lang}&type=advanced&wh0=andCOMPOSE%3D{alpha3}%2CorEMBEDDED_MANIFESTATION-TYPE%3Dpdf%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfa1a%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfa1b%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfa2a%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdfx%3BEMBEDDED_MANIFESTATION-TYPE%3Dpdf1x%3BEMBEDDED_MANIFESTATION-TYPE%3Dhtml%3BEMBEDDED_MANIFESTATION-TYPE%3Dxhtml%3BEMBEDDED_MANIFESTATION-TYPE%3Ddoc%3BEMBEDDED_MANIFESTATION-TYPE%3Ddocx"
         self.r = requests.Session()
@@ -112,9 +112,16 @@ class EURlexScraper:
         """
         Set the cookies for the session
         """
-        res = self.r.get(
-            f"https://eur-lex.europa.eu/search.html?scope=EURLEX&lang=it&type=quick&qid={int(datetime.now().timestamp())}"
-        )
+        keep_trying = True
+        while keep_trying:
+            try:
+                res = self.r.get(
+                    f"https://eur-lex.europa.eu/search.html?scope=EURLEX&lang={self.lang}&type=quick&qid={int(datetime.now().timestamp())}"
+                )
+                keep_trying = False
+            except:
+                logging.warning("Error setting cookies. Retrying...")
+                sleep(10)
         if res.ok:
             self.r.cookies.update(res.cookies)
         else:
