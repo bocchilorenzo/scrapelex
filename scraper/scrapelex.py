@@ -5,10 +5,11 @@ from time import sleep
 from datetime import datetime
 from re import sub
 import logging
-from os import makedirs, path, listdir
+from os import makedirs, path, listdir, cpu_count, _exit
 import gzip
 from tqdm import tqdm
 import languagecodes
+from multiprocessing import Pool
 
 
 class EURlexScraper:
@@ -200,16 +201,16 @@ class EURlexScraper:
             consolidated = True
 
         if text_element:
-            """ if texteonly:
-                full_text += (
-                    self.__clean_text(
-                        soup.find("div", {"id": "document1"})
-                        .find("div", {"class": "tabContent"})
-                        .find("strong")
-                        .text
-                    )
-                    + " "
-                ) """
+            """if texteonly:
+            full_text += (
+                self.__clean_text(
+                    soup.find("div", {"id": "document1"})
+                    .find("div", {"class": "tabContent"})
+                    .find("strong")
+                    .text
+                )
+                + " "
+            )"""
 
             skip = True
             for child in text_element.children:
@@ -464,7 +465,7 @@ class EURlexScraper:
 
                     for doc_id, doc_info in documents_in_page.items():
                         documents[term][doc_id] = doc_info
-
+                        eurovoc_classifiers, full_text = [], ""
                         (
                             page_html,
                             eurovoc_classifiers,
@@ -732,6 +733,35 @@ class EURlexScraper:
             resume_params,
         )
 
+    def scrape_local_core(self, info):
+        """
+        Core of the local scraping process for a single document.
+
+        :param info: tuple containing the file name and the directory
+        :return: dictionary containing the scraped data
+        """
+        file, directory = info
+        to_rtn = {}
+        with gzip.open(path.join(directory, file), "rb") as fp:
+            page_html = fp.read()
+
+            soup = BeautifulSoup(page_html, "lxml")
+            doc_id_generator = file.split(".html")[0].split("-", maxsplit=1)
+            doc_id = doc_id_generator[1]
+            to_rtn[doc_id] = {
+                "title": self.__clean_text(
+                    soup.find("p", {"id": "originalTitle"}).text.strip()
+                    if soup.find("p", {"id": "originalTitle"})
+                    else ""
+                ),
+                "link": f"https://eur-lex.europa.eu/legal-content/AUTO/?uri={doc_id_generator[0]}:{doc_id}",
+            }
+            eurovoc_classifiers, full_text = self.__scrape_page(page_html)
+
+            to_rtn[doc_id]["eurovoc_classifiers"] = eurovoc_classifiers
+            to_rtn[doc_id]["full_text"] = full_text
+        return to_rtn
+
     def get_documents_local(self, directory, save_data=False):
         """
         Scrape information from local files
@@ -751,22 +781,49 @@ class EURlexScraper:
         tqdm.write(f"Scraping documents in {directory}...")
         for file in tqdm(listdir(directory)):
             if file.endswith(".gz"):
-                with gzip.open(path.join(directory, file), "rb") as fp:
-                    page_html = fp.read()
+                documents.update(self.scrape_local_core((file, directory)))
 
-                    soup = BeautifulSoup(page_html, "lxml")
-                    doc_id_generator = file.split(".html")[0].split("-", maxsplit=1)
-                    doc_id = doc_id_generator[1]
-                    documents[doc_id] = {
-                        "title": self.__clean_text(
-                            soup.find("p", {"id": "originalTitle"}).text.strip()
-                        ),
-                        "link": f"https://eur-lex.europa.eu/legal-content/AUTO/?uri={doc_id_generator[0]}:{doc_id}",
-                    }
-                    eurovoc_classifiers, full_text = self.__scrape_page(page_html)
+        tqdm.write(
+            f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
+        )
 
-                    documents[doc_id]["eurovoc_classifiers"] = eurovoc_classifiers
-                    documents[doc_id]["full_text"] = full_text
+        if save_data:
+            with open(
+                path.realpath(path.join(directory, f"documents.json")),
+                "w",
+                encoding="utf-8",
+            ) as fp:
+                json.dump(documents, fp, ensure_ascii=False, indent=4)
+
+        return documents
+
+    def get_documents_local_multiprocess(self, directory, save_data=False, cpu_count=2):
+        """
+        Scrape information from local files using multiprocessing
+
+        :param directory: directory of the files to scrape
+        :param save_data: whether to save the data in a file in the same directory of the files. Default: False
+        :param cpu_count: number of cores to use. Default: 2
+        """
+        if not directory:
+            raise ValueError("No directory specified")
+        if not path.isdir(directory):
+            raise ValueError("Directory not found")
+
+        documents = {}
+
+        tqdm.write(f"Scraping documents in {directory}...")
+        inputs = [
+            (file, directory) for file in listdir(directory) if file.endswith(".gz")
+        ]
+
+        with Pool(cpu_count) as p:
+            scraped = list(
+                tqdm(p.imap(self.scrape_local_core, inputs), total=len(inputs))
+            )
+
+        for doc in scraped:
+            documents.update(doc)
 
         tqdm.write(
             f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"

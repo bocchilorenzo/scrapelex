@@ -36,6 +36,18 @@ if __name__ == "__main__":
         help="Scrape pages from the local directory instead of the web.",
     )
     parser.add_argument(
+        "--multiprocess",
+        default=False,
+        action="store_true",
+        help="Use multiple cores to scrape the data. Only works for local scraping.",
+    )
+    parser.add_argument(
+        "--cpu_count",
+        type=int,
+        default=2,
+        help="Number of cores to use for local scraping in case of multicore.",
+    )
+    parser.add_argument(
         "--directory",
         type=str,
         default="./eurlexdata/",
@@ -89,6 +101,15 @@ if __name__ == "__main__":
         exit()
 
     if args.scrape_local:
+        if args.multi_core:
+            if args.cpu_count == -1:
+                print("Invalid core count. Using 1 core.")
+                args.cpu_count = 1
+            documents = scraper.get_documents_local_multiprocess(
+                directory=args.directory,
+                save_data=args.save_data,
+                cpu_count=args.cpu_count,
+            )
         scraper.get_documents_local(
             directory=args.directory,
             save_data=args.save_data,
