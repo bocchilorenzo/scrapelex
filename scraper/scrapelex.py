@@ -173,11 +173,12 @@ class EURlexScraper:
         full_text = ""
 
         page_classifiers = soup.find("div", {"id": "PPClass_Contents"})
-        if page_classifiers:
+        if page_classifiers and page_classifiers.find("ul"):
             eurovoc_classifiers = [
                 classifier.find("a")["href"].split("DC_CODED=")[1].split("&")[0].strip()
                 for classifier in page_classifiers.find("ul").find_all("li")
-                if classifier.find("a") and "DC_CODED=" in classifier.find("a")["href"]
+                if classifier.find("a")
+                and "DC_CODED=" in classifier.find("a")["href"]
             ]
 
         text_element = None
