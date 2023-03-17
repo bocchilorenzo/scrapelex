@@ -259,7 +259,7 @@ class EURlexScraper:
         return eurovoc_classifiers, full_text
 
     def __get_full_document(
-        self, endpoint, max_retries=10, log_errors=True, directory="./"
+        self, endpoint, max_retries=10, log_errors=True, directory="./", scrape=True
     ):
         """
         Extract information from an individual document page from EUR-lex
@@ -268,6 +268,7 @@ class EURlexScraper:
         :param max_retries: max number of retries. Default: 10
         :param log_errors: log errors to a file. Default: True
         :param directory: directory of the error file. Default: current directory
+        :param scrape: scrape the page. Default: True
         :return: list of eurovoc classifiers and full text of the document
         """
         keep_trying = True
@@ -294,7 +295,8 @@ class EURlexScraper:
             if self.r.ok:
                 keep_trying = False
                 page_html = self.r.text
-                eurovoc_classifiers, full_text = self.__scrape_page(page_html)
+                if scrape:
+                    eurovoc_classifiers, full_text = self.__scrape_page(page_html)
 
             else:
                 if self.r.status_code == 404:
@@ -437,6 +439,7 @@ class EURlexScraper:
             makedirs(f"{directory}/docsHTML/{dirterm}", exist_ok=True)
             end = False
             count = 0
+            total_pages = 0
             while not end:
                 endpoint = (
                     base_url
@@ -477,6 +480,7 @@ class EURlexScraper:
                             ),
                             max_retries=max_retries,
                             log_errors=log_errors,
+                            scrape=save_data
                         )
 
                         self.__save_checkpoint(
@@ -500,17 +504,26 @@ class EURlexScraper:
                     if soup.find("i", class_="fa fa-angle-right"):
                         page += 1
                     else:
+                        if page < total_pages or total_pages == 0:
+                            logging.error(
+                                f"Error fetching search page {page}. Cooldown..."
+                            )
+                            sleep(60)
+                            count += 1
+                            continue
+                        
                         logging.info(f"Reached end of search results at page {page}")
                         end = True
                         page = 1
 
-                    total_pages = (
-                        soup.find("i", class_="fa fa-angle-double-right")
-                        .parent["href"]
-                        .split("&page=")[1]
-                        if soup.find("i", class_="fa fa-angle-double-right")
-                        else page
-                    )
+                    if total_pages == 0:
+                        total_pages = (
+                            soup.find("i", class_="fa fa-angle-double-right")
+                            .parent["href"]
+                            .split("&page=")[1]
+                            if soup.find("i", class_="fa fa-angle-double-right")
+                            else page
+                        )
                     if page % 10 == 0:
                         logging.info(
                             f"Currently at {page}/{total_pages} pages for {term}..."
@@ -589,13 +602,19 @@ class EURlexScraper:
         :param max_retries: max number of retries. Default: 10
         :return: dictionary of document information
         """
-        _, eurovoc_classifiers, full_text = self.__get_full_document(
+        page_html, eurovoc_classifiers, full_text = self.__get_full_document(
             endpoint, max_retries
         )
+        soup = BeautifulSoup(page_html, "lxml")
         return {
             "link": endpoint,
             "eurovoc_classifiers": eurovoc_classifiers,
             "full_text": full_text,
+            "title": self.__clean_text(
+                soup.find("p", {"id": "originalTitle"}).text.strip()
+                if soup.find("p", {"id": "originalTitle"})
+                else ""
+            )
         }
 
     def get_documents_by_category(
