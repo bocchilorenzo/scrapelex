@@ -501,6 +501,15 @@ class EURlexScraper:
                         documents[term][doc_id]["full_text"] = full_text
                         sleep(1)
 
+                    if total_pages == 0:
+                        total_pages = int(
+                            soup.find("i", class_="fa fa-angle-double-right")
+                            .parent["href"]
+                            .split("&page=")[1]
+                            if soup.find("i", class_="fa fa-angle-double-right")
+                            else page
+                        )
+
                     if soup.find("i", class_="fa fa-angle-right"):
                         page += 1
                     else:
@@ -516,14 +525,6 @@ class EURlexScraper:
                         end = True
                         page = 1
 
-                    if total_pages == 0:
-                        total_pages = int(
-                            soup.find("i", class_="fa fa-angle-double-right")
-                            .parent["href"]
-                            .split("&page=")[1]
-                            if soup.find("i", class_="fa fa-angle-double-right")
-                            else page
-                        )
                     if page % 10 == 0:
                         logging.info(
                             f"Currently at {page}/{total_pages} pages for {term}..."
