@@ -517,7 +517,7 @@ class EURlexScraper:
                         page = 1
 
                     if total_pages == 0:
-                        total_pages = (
+                        total_pages = int(
                             soup.find("i", class_="fa fa-angle-double-right")
                             .parent["href"]
                             .split("&page=")[1]
