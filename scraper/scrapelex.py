@@ -301,6 +301,12 @@ class EURlexScraper:
             else:
                 if self.r.status_code == 404:
                     logging.warning(f"Page {endpoint} not found")
+                    with open(
+                        path.realpath(path.join(directory, "not_found.txt")),
+                        "a",
+                        encoding="utf-8",
+                    ) as fp:
+                        fp.write(endpoint + "\n")
                     break
 
                 logging.error(
