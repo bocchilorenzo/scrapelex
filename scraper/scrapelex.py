@@ -177,8 +177,7 @@ class EURlexScraper:
             eurovoc_classifiers = [
                 classifier.find("a")["href"].split("DC_CODED=")[1].split("&")[0].strip()
                 for classifier in page_classifiers.find("ul").find_all("li")
-                if classifier.find("a")
-                and "DC_CODED=" in classifier.find("a")["href"]
+                if classifier.find("a") and "DC_CODED=" in classifier.find("a")["href"]
             ]
 
         text_element = None
@@ -486,7 +485,7 @@ class EURlexScraper:
                             ),
                             max_retries=max_retries,
                             log_errors=log_errors,
-                            scrape=save_data
+                            scrape=save_data,
                         )
 
                         self.__save_checkpoint(
@@ -526,7 +525,7 @@ class EURlexScraper:
                             sleep(60)
                             count += 1
                             continue
-                        
+
                         logging.info(f"Reached end of search results at page {page}")
                         end = True
                         page = 1
@@ -576,6 +575,35 @@ class EURlexScraper:
 
         return documents
 
+    def get_number_per_year(self):
+        """
+        Get the number of documents per year
+
+        :return: number of documents per year
+        """
+        endpoint = self.base_url + f"&qid={int(datetime.now().timestamp())}" + "&page=1"
+        self.r = requests.get(endpoint)
+        if self.r.ok:
+            soup = BeautifulSoup(self.r.text, "lxml")
+            number_per_year = {}
+            for year in soup.find("form", id="DD_YEAR_Form").parent.parent.find_all(
+                "li"
+            )[:-1]:
+                number_per_year[year.find("a")["id"].split("_")[-1]] = int(
+                    year.find("a").find("span").text.split("(")[1].split(")")[0]
+                )
+            for year in soup.find("select", id="DD_YEAR").find_all("option"):
+                if year["value"] != "":
+                    number_per_year[year["value"]] = int(
+                        year.text.split("(")[1].split(")")[0]
+                    )
+            return number_per_year
+        else:
+            logging.error(
+                f"Error fetching page {endpoint}. Status code: {self.r.status_code}"
+            )
+            return {}
+
     def get_available_years(self):
         """
         Get the years available on EUR-lex.
@@ -621,7 +649,7 @@ class EURlexScraper:
                 soup.find("p", {"id": "originalTitle"}).text.strip()
                 if soup.find("p", {"id": "originalTitle"})
                 else ""
-            )
+            ),
         }
 
     def get_documents_by_category(
