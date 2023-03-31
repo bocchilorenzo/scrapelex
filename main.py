@@ -30,6 +30,12 @@ if __name__ == "__main__":
         help="Use a previous checkpoint to resume scraping.",
     )
     parser.add_argument(
+        "--get_number",
+        default=False,
+        action="store_true",
+        help="Get the number of documents available per year for the specified language.",
+    )
+    parser.add_argument(
         "--scrape_local",
         default=False,
         action="store_true",
@@ -100,9 +106,17 @@ if __name__ == "__main__":
         pprint(scraper.get_available_years())
         exit()
 
+    if args.get_number:
+        print("Lookup started...")
+        docs = scraper.get_number_per_year()
+        print("Year\tNumber of documents")
+        for year in docs:
+            print(f"{year}\t{docs[year]}")
+        exit()
+
     if args.scrape_local:
         if args.multi_core:
-            if args.cpu_count == -1:
+            if args.cpu_count < 1:
                 print("Invalid core count. Using 1 core.")
                 args.cpu_count = 1
             documents = scraper.get_documents_local_multiprocess(
