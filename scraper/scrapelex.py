@@ -127,7 +127,8 @@ class EURlexScraper:
         while keep_trying:
             try:
                 res = self.r.get(
-                    f"https://eur-lex.europa.eu/search.html?scope=EURLEX&lang={self.lang}&type=quick&qid={int(datetime.now().timestamp())}"
+                    f"https://eur-lex.europa.eu/search.html?scope=EURLEX&lang={self.lang}&type=quick&qid={int(datetime.now().timestamp())}",
+                    timeout=60,
                 )
                 keep_trying = False
             except:
@@ -454,7 +455,7 @@ class EURlexScraper:
                     + f"&page={page}"
                 )
                 try:
-                    self.r = requests.get(endpoint)
+                    self.r = requests.get(endpoint, timeout=60)
                 except:
                     logging.error(f"Connection error for {endpoint}, cooling down...")
                     sleep(60)
@@ -582,7 +583,7 @@ class EURlexScraper:
         :return: number of documents per year
         """
         endpoint = self.base_url + f"&qid={int(datetime.now().timestamp())}" + "&page=1"
-        self.r = requests.get(endpoint)
+        self.r = requests.get(endpoint, timeout=60)
         if self.r.ok:
             soup = BeautifulSoup(self.r.text, "lxml")
             number_per_year = {}
