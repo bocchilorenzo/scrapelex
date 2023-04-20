@@ -42,7 +42,7 @@ if __name__ == "__main__":
         help="Scrape pages from the local directory instead of the web.",
     )
     parser.add_argument(
-        "--multiprocess",
+        "--multi_core",
         default=False,
         action="store_true",
         help="Use multiple cores to scrape the data. Only works for local scraping.",
@@ -124,10 +124,11 @@ if __name__ == "__main__":
                 save_data=args.save_data,
                 cpu_count=args.cpu_count,
             )
-        scraper.get_documents_local(
-            directory=args.directory,
-            save_data=args.save_data,
-        )
+        else:
+            scraper.get_documents_local(
+                directory=args.directory,
+                save_data=args.save_data,
+            )
     else:
         if args.year == "":
             if args.category == "":
