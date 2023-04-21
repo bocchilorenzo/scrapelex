@@ -402,6 +402,7 @@ class EURlexScraper:
         save_data=False,
         directory="./",
         max_retries=10,
+        sleep_time=0,
         n=0,
         mode="year",
         resume_params=None,
@@ -417,6 +418,7 @@ class EURlexScraper:
         :param save_data: whether to save the scraped data of each category in its own file. Pass 'False' if you want to handle the saving yourself. Default: False
         :param directory: directory to save the scraped data. Default: current directory
         :param max_retries: maximum number of retries for each page, both search pages and individual documents. Default: 10
+        :param sleep_time: time to sleep between each document request. Default: 0
         :param n: number of documents to scrape. Default: 0 (all)
         :param mode: whether to scrape by year or category. Default: year
         :param resume_params: dictionary containing the parameters to resume scraping. Default: None
@@ -505,7 +507,7 @@ class EURlexScraper:
                             "eurovoc_classifiers"
                         ] = eurovoc_classifiers
                         documents[term][doc_id]["full_text"] = full_text
-                        sleep(1)
+                        sleep(sleep_time)
 
                     if total_pages == 0:
                         total_pages = int(
@@ -661,6 +663,7 @@ class EURlexScraper:
         save_data=False,
         directory="./",
         max_retries=10,
+        sleep_time=0,
         n=0,
         resume=False,
     ):
@@ -674,6 +677,7 @@ class EURlexScraper:
         :param save_data: whether to save the scraped data of each category in its own file. Pass 'False' if you want to handle the saving yourself. Default: False
         :param directory: directory to save the scraped data. Default: current directory
         :param max_retries: maximum number of retries for each page, both search pages and individual documents. Default: 10
+        :param sleep_time: time to sleep between each document request. Default: 0
         :param n: number of documents to scrape. Default: 0 (all)
         :param resume: whether to resume scraping from the last checkpoint. Default: False
         :return: dictionary of documents
@@ -716,6 +720,7 @@ class EURlexScraper:
             save_data,
             directory,
             max_retries,
+            sleep_time,
             n,
             "category",
             resume_params,
@@ -729,6 +734,7 @@ class EURlexScraper:
         save_data=False,
         directory="./",
         max_retries=10,
+        sleep_time=0,
         n=0,
         resume=False,
     ):
@@ -742,6 +748,7 @@ class EURlexScraper:
         :param save_data: whether to save the scraped data of each year in its own file. Pass 'False' if you want to handle the saving yourself. Default: False
         :param directory: directory to save the scraped data. Default: current directory
         :param max_retries: maximum number of retries for each page, both search pages and individual documents. Default: 10
+        :param sleep_time: time to sleep between each document request. Default: 0
         :param n: number of documents to scrape. Default: 0 (all)
         :param resume: whether to resume scraping from the last saved year. Default: False
         :return: dictionary of documents
@@ -784,6 +791,7 @@ class EURlexScraper:
             save_data,
             directory,
             max_retries,
+            sleep_time,
             n,
             "year",
             resume_params,

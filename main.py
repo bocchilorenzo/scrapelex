@@ -66,6 +66,12 @@ if __name__ == "__main__":
         help="Maximum number of retries for each page, both search pages and individual documents.",
     )
     parser.add_argument(
+        "--sleep_time",
+        type=int,
+        default=1,
+        help="Sleep time between document requests.",
+    )
+    parser.add_argument(
         "--log_level",
         type=int,
         default=2,
