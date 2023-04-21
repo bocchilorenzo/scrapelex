@@ -145,6 +145,7 @@ if __name__ == "__main__":
                     directory=args.directory,
                     resume=args.resume,
                     max_retries=args.max_retries,
+                    sleep_time=args.sleep_time,
                 )
             documents = scraper.get_documents_by_category(
                 categories=args.category.split(","),
@@ -153,6 +154,7 @@ if __name__ == "__main__":
                 directory=args.directory,
                 resume=args.resume,
                 max_retries=args.max_retries,
+                sleep_time=args.sleep_time,
             )
         else:
             if args.category != "":
@@ -164,5 +166,6 @@ if __name__ == "__main__":
                 directory=args.directory,
                 resume=args.resume,
                 max_retries=args.max_retries,
+                sleep_time=args.sleep_time,
             )
     
