@@ -5,7 +5,7 @@ from time import sleep
 from datetime import datetime
 from re import sub
 import logging
-from os import makedirs, path, listdir, cpu_count, _exit
+from os import makedirs, path, listdir
 import gzip
 from tqdm import tqdm
 import languagecodes
@@ -17,8 +17,8 @@ class EURlexScraper:
         """
         Initialize the EurLexScraper object
 
-        :param lang: language of the EUR-lex website. Default: it
-        :param log_level: logging level. Available values: 0, 1, 2. Default: 0.
+        :param lang: language of the EUR-lex website.
+        :param log_level: logging level. Available values: 0, 1, 2.
         """
         if log_level not in {0, 1, 2, 3}:
             raise ValueError("Invalid log level. Available values: 0, 1, 2.")
@@ -265,10 +265,10 @@ class EURlexScraper:
         Extract information from an individual document page from EUR-lex
 
         :param endpoint: page endpoint
-        :param max_retries: max number of retries. Default: 10
-        :param log_errors: log errors to a file. Default: True
-        :param directory: directory of the error file. Default: current directory
-        :param scrape: scrape the page. Default: True
+        :param max_retries: max number of retries.
+        :param log_errors: log errors to a file.
+        :param directory: directory of the error file.
+        :param scrape: scrape the page.
         :return: list of eurovoc classifiers and full text of the document
         """
         keep_trying = True
@@ -406,22 +406,24 @@ class EURlexScraper:
         n=0,
         mode="year",
         resume_params=None,
+        skip_existing=True,
     ):
         """
         General function that scrapes documents from the search page
         NOTE: the 'n' parameter is not implemented yet
 
-        :param terms: list of terms to scrape. Default: all
         :param search_term: search term to use
-        :param log_errors: whether to log errors in a file. Default: True
-        :param save_html: whether to save the html of each document. Default: False
-        :param save_data: whether to save the scraped data of each category in its own file. Pass 'False' if you want to handle the saving yourself. Default: False
-        :param directory: directory to save the scraped data. Default: current directory
-        :param max_retries: maximum number of retries for each page, both search pages and individual documents. Default: 10
-        :param sleep_time: time to sleep between each document request. Default: 0
-        :param n: number of documents to scrape. Default: 0 (all)
-        :param mode: whether to scrape by year or category. Default: year
-        :param resume_params: dictionary containing the parameters to resume scraping. Default: None
+        :param terms: list of terms to scrape.
+        :param log_errors: whether to log errors in a file.
+        :param save_html: whether to save the html of each document.
+        :param save_data: whether to save the scraped data of each category in its own file. Pass 'False' if you want to handle the saving yourself.
+        :param directory: directory to save the scraped data.
+        :param max_retries: maximum number of retries for each page, both search pages and individual documents.
+        :param sleep_time: time to sleep between each document request.
+        :param n: number of documents to scrape.
+        :param mode: whether to scrape by year or category.
+        :param resume_params: dictionary containing the parameters to resume scraping.
+        :param skip_existing: whether to skip documents that have already been scraped.
         :return: dictionary of documents
         """
         documents = {}
@@ -475,9 +477,17 @@ class EURlexScraper:
                         documents[term] = {}
                     documents_in_page = self.__get_documents_info(soup)
 
+                    skip_count = 0
                     for doc_id, doc_info in documents_in_page.items():
                         documents[term][doc_id] = doc_info
                         eurovoc_classifiers, full_text = [], ""
+                        
+                        if skip_existing and path.exists(
+                            f"{directory}/docsHTML/{dirterm}/{doc_id}.html.gz"
+                        ):
+                            skip_count += 1
+                            continue
+
                         (
                             page_html,
                             eurovoc_classifiers,
@@ -507,6 +517,9 @@ class EURlexScraper:
                             "eurovoc_classifiers"
                         ] = eurovoc_classifiers
                         documents[term][doc_id]["full_text"] = full_text
+                        sleep(sleep_time)
+
+                    if skip_count == len(documents_in_page):
                         sleep(sleep_time)
 
                     if total_pages == 0:
@@ -637,7 +650,7 @@ class EURlexScraper:
         Get the Eurovoc classifiers and full text of a single document
 
         :param endpoint: document endpoint
-        :param max_retries: max number of retries. Default: 10
+        :param max_retries: max number of retries.
         :return: dictionary of document information
         """
         page_html, eurovoc_classifiers, full_text = self.__get_full_document(
@@ -666,20 +679,22 @@ class EURlexScraper:
         sleep_time=0,
         n=0,
         resume=False,
+        skip_existing=True,
     ):
         """
         Scrape all the documents for the given categories
         NOTE: the 'n' parameter is not implemented yet
 
-        :param categories: list of categories to scrape. Default: all
-        :param log_errors: whether to log errors in a file. Default: True
-        :param save_html: whether to save the html of each document. Default: False
-        :param save_data: whether to save the scraped data of each category in its own file. Pass 'False' if you want to handle the saving yourself. Default: False
-        :param directory: directory to save the scraped data. Default: current directory
-        :param max_retries: maximum number of retries for each page, both search pages and individual documents. Default: 10
-        :param sleep_time: time to sleep between each document request. Default: 0
-        :param n: number of documents to scrape. Default: 0 (all)
-        :param resume: whether to resume scraping from the last checkpoint. Default: False
+        :param categories: list of categories to scrape.
+        :param log_errors: whether to log errors in a file.
+        :param save_html: whether to save the html of each document.
+        :param save_data: whether to save the scraped data of each category in its own file. Pass 'False' if you want to handle the saving yourself.
+        :param directory: directory to save the scraped data.
+        :param max_retries: maximum number of retries for each page, both search pages and individual documents.
+        :param sleep_time: time to sleep between each document request.
+        :param n: number of documents to scrape.
+        :param resume: whether to resume scraping from the last checkpoint.
+        :param skip_existing: whether to skip the documents that have already been scraped.
         :return: dictionary of documents
         """
         directory = f"{directory}/{self.lang}"
@@ -724,6 +739,7 @@ class EURlexScraper:
             n,
             "category",
             resume_params,
+            skip_existing,
         )
 
     def get_documents_by_year(
@@ -737,20 +753,22 @@ class EURlexScraper:
         sleep_time=0,
         n=0,
         resume=False,
+        skip_existing=True,
     ):
         """
         Get all the documents for the given years
         NOTE: the 'n' parameter is not implemented yet
 
-        :param years: list of years to scrape. Default: all
-        :param log_errors: whether to log errors in a file, allowing the user to check the faulty URLs. Default: True
-        :param save_html: whether to save the html of each scraped page in its own file. Default: False
-        :param save_data: whether to save the scraped data of each year in its own file. Pass 'False' if you want to handle the saving yourself. Default: False
-        :param directory: directory to save the scraped data. Default: current directory
-        :param max_retries: maximum number of retries for each page, both search pages and individual documents. Default: 10
-        :param sleep_time: time to sleep between each document request. Default: 0
-        :param n: number of documents to scrape. Default: 0 (all)
-        :param resume: whether to resume scraping from the last saved year. Default: False
+        :param years: list of years to scrape.
+        :param log_errors: whether to log errors in a file, allowing the user to check the faulty URLs.
+        :param save_html: whether to save the html of each scraped page in its own file.
+        :param save_data: whether to save the scraped data of each year in its own file. Pass 'False' if you want to handle the saving yourself.
+        :param directory: directory to save the scraped data.
+        :param max_retries: maximum number of retries for each page, both search pages and individual documents.
+        :param sleep_time: time to sleep between each document request.
+        :param n: number of documents to scrape.
+        :param resume: whether to resume scraping from the last saved year.
+        :param skip_existing: whether to skip the documents that have already been scraped.
         :return: dictionary of documents
         """
         directory = f"{directory}/{self.lang}"
@@ -795,6 +813,7 @@ class EURlexScraper:
             n,
             "year",
             resume_params,
+            skip_existing,
         )
 
     def scrape_local_core(self, info):
@@ -831,10 +850,9 @@ class EURlexScraper:
         Scrape information from local files
 
         :param directory: directory of the files to scrape
-        :param save_data: whether to save the data in a file in the same directory of the files. Default: False
+        :param save_data: whether to save the data in a file in the same directory of the files.
         :return: dictionary of documents
         """
-
         if not directory:
             raise ValueError("No directory specified")
         if not path.isdir(directory):
@@ -866,7 +884,7 @@ class EURlexScraper:
         Scrape information from local files using multiprocessing
 
         :param directory: directory of the files to scrape
-        :param save_data: whether to save the data in a file in the same directory of the files. Default: False
+        :param save_data: whether to save the data in a file in the same directory of the files.
         :param cpu_count: number of cores to use. Default: 2
         """
         if not directory:

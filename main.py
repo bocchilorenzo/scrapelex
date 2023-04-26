@@ -30,6 +30,12 @@ if __name__ == "__main__":
         help="Use a previous checkpoint to resume scraping.",
     )
     parser.add_argument(
+        "--clean",
+        default=False,
+        action="store_true",
+        help="Scrape all the documents, ignoring the ones already downloaded.",
+    )
+    parser.add_argument(
         "--get_number",
         default=False,
         action="store_true",
@@ -146,16 +152,19 @@ if __name__ == "__main__":
                     resume=args.resume,
                     max_retries=args.max_retries,
                     sleep_time=args.sleep_time,
+                    skip_existing=not(args.clean),
                 )
-            documents = scraper.get_documents_by_category(
-                categories=args.category.split(","),
-                save_data=args.save_data,
-                save_html=args.save_html,
-                directory=args.directory,
-                resume=args.resume,
-                max_retries=args.max_retries,
-                sleep_time=args.sleep_time,
-            )
+            else:
+                documents = scraper.get_documents_by_category(
+                    categories=args.category.split(","),
+                    save_data=args.save_data,
+                    save_html=args.save_html,
+                    directory=args.directory,
+                    resume=args.resume,
+                    max_retries=args.max_retries,
+                    sleep_time=args.sleep_time,
+                    skip_existing=not(args.clean),
+                )
         else:
             if args.category != "":
                 raise("You can't specify both a category and a year.")
@@ -167,5 +176,6 @@ if __name__ == "__main__":
                 resume=args.resume,
                 max_retries=args.max_retries,
                 sleep_time=args.sleep_time,
+                skip_existing=not(args.clean),
             )
     
