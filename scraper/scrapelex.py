@@ -480,7 +480,10 @@ class EURlexScraper:
                     skip_count = 0
                     for doc_id, doc_info in documents_in_page.items():
                         documents[term][doc_id] = doc_info
-                        eurovoc_classifiers, full_text = [], ""
+                        documents[term][doc_id][
+                            "eurovoc_classifiers"
+                        ] = []
+                        documents[term][doc_id]["full_text"] = ""
                         
                         if skip_existing and path.exists(
                             f"{directory}/docsHTML/{dirterm}/{doc_id}.html.gz"
@@ -580,7 +583,7 @@ class EURlexScraper:
 
             logging.info(
                 f"Scraping for {term} completed.\n- Documents scraped: {len(documents[term])}\n"
-                f"- Documents without eurovoc classifiers: {len([doc for doc in documents[term] if 'eurovoc_classifiers' not in documents[term][doc] or len(documents[term][doc]['eurovoc_classifiers']) == 0])}\n"
+                f"- Documents without eurovoc classifiers: {len([doc for doc in documents[term] if len(documents[term][doc]['eurovoc_classifiers']) == 0])}\n"
                 f"- Average number of Eurovoc classifiers per document: {sum([len(documents[term][doc]['eurovoc_classifiers']) for doc in documents[term]])/len(documents[term]) if len(documents[term]) > 0 else 0}"
             )
             if save_data:
