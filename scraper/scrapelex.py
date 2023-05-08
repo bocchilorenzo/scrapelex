@@ -587,8 +587,8 @@ class EURlexScraper:
                 f"- Average number of Eurovoc classifiers per document: {sum([len(documents[term][doc]['eurovoc_classifiers']) for doc in documents[term]])/len(documents[term]) if len(documents[term]) > 0 else 0}"
             )
             if save_data:
-                with open(f"{directory}/{dirterm}.json", "w", encoding="utf-8") as fp:
-                    json.dump(documents[term], fp, ensure_ascii=False, indent=4)
+                with gzip.open(f"{directory}/{dirterm}.json.gz", "wt", encoding="utf-8") as fp:
+                    json.dump(documents[term], fp, ensure_ascii=False)
 
                 del documents[term]
 
