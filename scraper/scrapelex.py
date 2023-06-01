@@ -848,78 +848,91 @@ class EURlexScraper:
             to_rtn[doc_id]["full_text"] = full_text
         return to_rtn
 
-    def get_documents_local(self, directory, save_data=False):
+    def get_documents_local(self, directory, years=[], language=""):
         """
         Scrape information from local files
 
-        :param directory: directory of the files to scrape
+        :param directory: main directory of the files to scrape
         :param save_data: whether to save the data in a file in the same directory of the files.
-        :return: dictionary of documents
+        :param years: list of years to create the range to scrape.
+        :param language: language of the documents to scrape.
         """
         if not directory:
             raise ValueError("No directory specified")
         if not path.isdir(directory):
             raise ValueError("Directory not found")
+        
+        makedirs(path.join(directory, language, "extracted"), exist_ok=True)
 
-        documents = {}
+        for year in range(int(years[0]), int(years[1]) + 1):
+            documents = {}
 
-        tqdm.write(f"Scraping documents in {directory}...")
-        for file in tqdm(listdir(directory)):
-            if file.endswith(".gz"):
-                documents.update(self.scrape_local_core((file, directory)))
+            dir_scrape = path.join(directory, language, 'docsHTML', str(year))
 
-        tqdm.write(
-            f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
-        )
+            if not path.isdir(dir_scrape):
+                print(f"Directory {dir_scrape} not found. Skipping...")
 
-        if save_data:
-            with open(
-                path.realpath(path.join(directory, f"documents.json")),
-                "w",
+            tqdm.write(f"Scraping documents in {dir_scrape}...")
+            for file in tqdm(listdir(dir_scrape)):
+                if file.endswith(".gz"):
+                    documents.update(self.scrape_local_core((file, dir_scrape)))
+
+            tqdm.write(
+                f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
+            )
+
+            with gzip.open(
+                path.realpath(path.join(directory, language, "extracted", str(year) + ".json.gz")),
+                "wt",
                 encoding="utf-8",
             ) as fp:
-                json.dump(documents, fp, ensure_ascii=False, indent=4)
+                json.dump(documents, fp, ensure_ascii=False)
 
-        return documents
-
-    def get_documents_local_multiprocess(self, directory, save_data=False, cpu_count=2):
+    def get_documents_local_multiprocess(self, directory, cpu_count=2, years=[], language=""):
         """
         Scrape information from local files using multiprocessing
 
-        :param directory: directory of the files to scrape
+        :param directory: main directory of the files to scrape
         :param save_data: whether to save the data in a file in the same directory of the files.
         :param cpu_count: number of cores to use. Default: 2
+        :param years: list of years to create the range to scrape.
+        :param language: language of the documents to scrape.
         """
         if not directory:
             raise ValueError("No directory specified")
         if not path.isdir(directory):
             raise ValueError("Directory not found")
+        
+        makedirs(path.join(directory, language, "extracted"), exist_ok=True)
 
-        documents = {}
+        for year in range(int(years[0]), int(years[1]) + 1):
+            documents = {}
 
-        tqdm.write(f"Scraping documents in {directory}...")
-        inputs = [
-            (file, directory) for file in listdir(directory) if file.endswith(".gz")
-        ]
+            dir_scrape = path.join(directory, language, 'docsHTML', str(year))
 
-        with Pool(cpu_count) as p:
-            scraped = list(
-                tqdm(p.imap(self.scrape_local_core, inputs), total=len(inputs))
+            if not path.isdir(dir_scrape):
+                print(f"Directory {dir_scrape} not found. Skipping...")
+
+            tqdm.write(f"Scraping documents in {dir_scrape}...")
+            inputs = [
+                (file, dir_scrape) for file in listdir(dir_scrape) if file.endswith(".gz")
+            ]
+
+            with Pool(cpu_count) as p:
+                scraped = list(
+                    tqdm(p.imap(self.scrape_local_core, inputs), total=len(inputs))
+                )
+
+            for doc in scraped:
+                documents.update(doc)
+
+            tqdm.write(
+                f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
             )
 
-        for doc in scraped:
-            documents.update(doc)
-
-        tqdm.write(
-            f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
-        )
-
-        if save_data:
-            with open(
-                path.realpath(path.join(directory, f"documents.json")),
-                "w",
+            with gzip.open(
+                path.realpath(path.join(directory, language, "extracted", str(year) + ".json.gz")),
+                "wt",
                 encoding="utf-8",
             ) as fp:
-                json.dump(documents, fp, ensure_ascii=False, indent=4)
-
-        return documents
+                json.dump(documents, fp, ensure_ascii=False)
