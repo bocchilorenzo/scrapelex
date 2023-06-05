@@ -828,24 +828,29 @@ class EURlexScraper:
         """
         file, directory = info
         to_rtn = {}
-        with gzip.open(path.join(directory, file), "rb") as fp:
-            page_html = fp.read()
+        try:
+            with gzip.open(path.join(directory, file), "rb") as fp:
+                page_html = fp.read()
+        except Exception as e:
+            print()
+            logging.error(f"Error while reading {file}: {e}")
+            return to_rtn
 
-            soup = BeautifulSoup(page_html, "lxml")
-            doc_id_generator = file.split(".html")[0].split("-", maxsplit=1)
-            doc_id = doc_id_generator[1]
-            to_rtn[doc_id] = {
-                "title": self.__clean_text(
-                    soup.find("p", {"id": "originalTitle"}).text.strip()
-                    if soup.find("p", {"id": "originalTitle"})
-                    else ""
-                ),
-                "link": f"https://eur-lex.europa.eu/legal-content/AUTO/?uri={doc_id_generator[0]}:{doc_id}",
-            }
-            eurovoc_classifiers, full_text = self.__scrape_page(page_html)
+        soup = BeautifulSoup(page_html, "lxml")
+        doc_id_generator = file.split(".html")[0].split("-", maxsplit=1)
+        doc_id = doc_id_generator[1]
+        to_rtn[doc_id] = {
+            "title": self.__clean_text(
+                soup.find("p", {"id": "originalTitle"}).text.strip()
+                if soup.find("p", {"id": "originalTitle"})
+                else ""
+            ),
+            "link": f"https://eur-lex.europa.eu/legal-content/AUTO/?uri={doc_id_generator[0]}:{doc_id}",
+        }
+        eurovoc_classifiers, full_text = self.__scrape_page(page_html)
 
-            to_rtn[doc_id]["eurovoc_classifiers"] = eurovoc_classifiers
-            to_rtn[doc_id]["full_text"] = full_text
+        to_rtn[doc_id]["eurovoc_classifiers"] = eurovoc_classifiers
+        to_rtn[doc_id]["full_text"] = full_text
         return to_rtn
 
     def get_documents_local(self, directory, years=[], language=""):

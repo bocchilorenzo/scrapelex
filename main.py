@@ -132,9 +132,9 @@ if __name__ == "__main__":
                 print("Invalid core count. Using 1 core.")
                 args.cpu_count = 1
             if args.year == "":
-                raise("You must specify at least a year when extracting from local files.")
+                raise BaseException("You must specify at least a year when extracting from local files.")
             if len(args.year.split(",")) != 2:
-                raise("You must specify a range of years when extracting from local files. Example: --year 2010,2020 will scrape all the documents from 2010 to 2020 (included).")
+                raise BaseException("You must specify a range of years when extracting from local files. Example: --year 2010,2020 will scrape all the documents from 2010 to 2020 (included).")
             documents = scraper.get_documents_local_multiprocess(
                 directory=args.directory,
                 cpu_count=args.cpu_count,
