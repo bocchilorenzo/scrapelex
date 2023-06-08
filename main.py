@@ -3,104 +3,26 @@ from scraper import EURlexScraper
 from pprint import pprint
 
 if __name__ == "__main__":
+    #fmt: off
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--language", type=str, default="it", help="Language to scrape.")
-    parser.add_argument(
-        "--year", type=str, default="", help="Years to scrape."
-    )
-    parser.add_argument(
-        "--category", type=str, default="", help="Categories to scrape."
-    )
-    parser.add_argument(
-        "--save_data",
-        default=False,
-        action="store_true",
-        help="Whether to save the scraped data in a json file for the year.",
-    )
-    parser.add_argument(
-        "--save_html",
-        default=False,
-        action="store_true",
-        help="Whether to save the html of each scraped page in its own gzipped file.",
-    )
-    parser.add_argument(
-        "--resume",
-        default=False,
-        action="store_true",
-        help="Use a previous checkpoint to resume scraping.",
-    )
-    parser.add_argument(
-        "--clean",
-        default=False,
-        action="store_true",
-        help="Scrape all the documents, ignoring the ones already downloaded.",
-    )
-    parser.add_argument(
-        "--get_number",
-        default=False,
-        action="store_true",
-        help="Get the number of documents available per year for the specified language.",
-    )
-    parser.add_argument(
-        "--scrape_local",
-        default=False,
-        action="store_true",
-        help="Scrape pages from the local directory instead of the web.",
-    )
-    parser.add_argument(
-        "--multi_core",
-        default=False,
-        action="store_true",
-        help="Use multiple cores to scrape the data. Only works for local scraping.",
-    )
-    parser.add_argument(
-        "--cpu_count",
-        type=int,
-        default=2,
-        help="Number of cores to use for local scraping in case of multicore.",
-    )
-    parser.add_argument(
-        "--directory",
-        type=str,
-        default="./eurlexdata/",
-        help="Directory to save the scraped data, or to process in case of local scraping.",
-    )
-    parser.add_argument(
-        "--max_retries",
-        type=int,
-        default=10,
-        help="Maximum number of retries for each page, both search pages and individual documents.",
-    )
-    parser.add_argument(
-        "--sleep_time",
-        type=int,
-        default=1,
-        help="Sleep time between document requests.",
-    )
-    parser.add_argument(
-        "--log_level",
-        type=int,
-        default=2,
-        help="Log level: 0 = errors only, 1 = previous + warnings, 2 = previous + general information.",
-    )
-    parser.add_argument(
-        "--get_categories",
-        default=False,
-        action="store_true",
-        help="Show the available categories.",
-    )
-    parser.add_argument(
-        "--get_languages",
-        default=False,
-        action="store_true",
-        help="Show the available languages.",
-    )
-    parser.add_argument(
-        "--get_years",
-        default=False,
-        action="store_true",
-        help="Show the available years.",
-    )
+    parser.add_argument("--year", type=str, default="", help="Years to scrape.")
+    parser.add_argument("--category", type=str, default="", help="Categories to scrape.")
+    parser.add_argument("--save_data", default=False, action="store_true", help="Whether to save the scraped data in a json file for the year.")
+    parser.add_argument("--save_html", default=False, action="store_true", help="Whether to save the html of each scraped page in its own gzipped file.")
+    parser.add_argument("--resume", default=False, action="store_true", help="Use a previous checkpoint to resume scraping.")
+    parser.add_argument("--clean", default=False, action="store_true", help="Scrape all the documents, ignoring the ones already downloaded.")
+    parser.add_argument("--get_number", default=False, action="store_true", help="Get the number of documents available per year for the specified language.")
+    parser.add_argument("--scrape_local", default=False, action="store_true", help="Scrape pages from the local directory instead of the web.")
+    parser.add_argument("--multi_core", default=False, action="store_true", help="Use multiple cores to scrape the data. Only works for local scraping.")
+    parser.add_argument("--cpu_count", type=int, default=2, help="Number of cores to use for local scraping in case of multicore.")
+    parser.add_argument("--directory", type=str, default="./eurlexdata/", help="Directory for the saved data.")
+    parser.add_argument("--max_retries", type=int, default=10, help="Maximum number of retries for each page, both search pages and individual documents.")
+    parser.add_argument("--sleep_time", type=int, default=1, help="Sleep time between document requests.")
+    parser.add_argument("--log_level", type=int, default=2, help="Log level: 0 = errors only, 1 = previous + warnings, 2 = previous + general information.")
+    parser.add_argument("--get_categories", default=False, action="store_true", help="Show the available categories.")
+    parser.add_argument("--get_languages", default=False, action="store_true", help="Show the available languages.")
+    parser.add_argument("--get_years", default=False, action="store_true", help="Show the available years.")
 
     args = parser.parse_args()
 

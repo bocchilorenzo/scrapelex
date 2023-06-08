@@ -838,7 +838,11 @@ class EURlexScraper:
 
         soup = BeautifulSoup(page_html, "lxml")
         doc_id_generator = file.split(".html")[0].split("-", maxsplit=1)
-        doc_id = doc_id_generator[1]
+        try:
+            doc_id = doc_id_generator[1]
+        except:
+            logging.error(f"Error while reading {file}. Invalid file name.")
+            return to_rtn
         to_rtn[doc_id] = {
             "title": self.__clean_text(
                 soup.find("p", {"id": "originalTitle"}).text.strip()
