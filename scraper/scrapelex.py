@@ -857,7 +857,7 @@ class EURlexScraper:
         to_rtn[doc_id]["full_text"] = full_text
         return to_rtn
 
-    def get_documents_local(self, directory, years=[], language=""):
+    def get_documents_local(self, directory, json_folder=None, years=[], language=""):
         """
         Scrape information from local files
 
@@ -871,7 +871,10 @@ class EURlexScraper:
         if not path.isdir(directory):
             raise ValueError("Directory not found")
         
-        makedirs(path.join(directory, language, "extracted"), exist_ok=True)
+        out_dir = path.join(directory, language, "extracted")
+        if json_folder:
+            out_dir = path.join(json_folder, language)
+        makedirs(out_dir, exist_ok=True)
 
         for year in range(int(years[0]), int(years[1]) + 1):
             documents = {}
@@ -891,13 +894,13 @@ class EURlexScraper:
             )
 
             with gzip.open(
-                path.realpath(path.join(directory, language, "extracted", str(year) + ".json.gz")),
+                path.realpath(path.join(out_dir, str(year) + ".json.gz")),
                 "wt",
                 encoding="utf-8",
             ) as fp:
                 json.dump(documents, fp, ensure_ascii=False)
 
-    def get_documents_local_multiprocess(self, directory, cpu_count=2, years=[], language=""):
+    def get_documents_local_multiprocess(self, directory, json_folder=None, cpu_count=2, years=[], language=""):
         """
         Scrape information from local files using multiprocessing
 
@@ -912,7 +915,10 @@ class EURlexScraper:
         if not path.isdir(directory):
             raise ValueError("Directory not found")
         
-        makedirs(path.join(directory, language, "extracted"), exist_ok=True)
+        out_dir = path.join(directory, language, "extracted")
+        if json_folder:
+            out_dir = path.join(json_folder, language)
+        makedirs(out_dir, exist_ok=True)
 
         for year in range(int(years[0]), int(years[1]) + 1):
             documents = {}
@@ -940,7 +946,7 @@ class EURlexScraper:
             )
 
             with gzip.open(
-                path.realpath(path.join(directory, language, "extracted", str(year) + ".json.gz")),
+                path.realpath(path.join(out_dir, str(year) + ".json.gz")),
                 "wt",
                 encoding="utf-8",
             ) as fp:

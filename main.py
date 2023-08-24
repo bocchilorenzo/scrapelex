@@ -8,7 +8,8 @@ if __name__ == "__main__":
     parser.add_argument("--language", type=str, default="it", help="Language to scrape.")
     parser.add_argument("--year", type=str, default="", help="Years to scrape.")
     parser.add_argument("--category", type=str, default="", help="Categories to scrape.")
-    parser.add_argument("--save_data", default=False, action="store_true", help="Whether to save the scraped data in a json file for the year.")
+    parser.add_argument("--save_data", default=False, action="store_true", help="Whether to save the scraped data in a JSON file for the year.")
+    parser.add_argument("--json_folder", metavar="FOLDER", default=None, help="JSON folder where to save data.")
     parser.add_argument("--save_html", default=False, action="store_true", help="Whether to save the html of each scraped page in its own gzipped file.")
     parser.add_argument("--resume", default=False, action="store_true", help="Use a previous checkpoint to resume scraping.")
     parser.add_argument("--clean", default=False, action="store_true", help="Scrape all the documents, ignoring the ones already downloaded.")
@@ -59,6 +60,7 @@ if __name__ == "__main__":
                 raise BaseException("You must specify a range of years when extracting from local files. Example: --year 2010,2020 will scrape all the documents from 2010 to 2020 (included).")
             documents = scraper.get_documents_local_multiprocess(
                 directory=args.directory,
+                json_folder=args.json_folder,
                 cpu_count=args.cpu_count,
                 years=args.year.split(","),
                 language=args.language,
@@ -66,6 +68,7 @@ if __name__ == "__main__":
         else:
             scraper.get_documents_local(
                 directory=args.directory,
+                json_folder=args.json_folder,
                 years=args.year.split(","),
                 language=args.language,
             )
