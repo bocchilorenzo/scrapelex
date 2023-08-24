@@ -169,6 +169,7 @@ class EURlexScraper:
         :param page_html: html of the page
         :return: list of eurovoc classifiers and full text of the document
         """
+        page_html = sub(r"<br[/ ]*>", "\n", page_html.decode("utf-8"))
         soup = BeautifulSoup(page_html, "lxml")
         eurovoc_classifiers = []
         full_text = ""
@@ -230,23 +231,23 @@ class EURlexScraper:
                     if child.has_attr("class"):
                         if "footnote" in child["class"] or "modref" in child["class"]:
                             continue
-                    full_text += self.__clean_text(child.text) + " "
+                    full_text += self.__clean_text(child.text) + "\n"
                 elif child.name == "div":
                     if consolidated and skip:
                         continue
                     for p in child.find_all("p"):
-                        full_text += self.__clean_text(p.text) + " "
+                        full_text += self.__clean_text(p.text) + "\n"
                 elif child.name == "table":
                     if consolidated and skip:
                         continue
                     for tr in child.find_all("tr"):
-                        full_text += self.__clean_text(tr.text) + " "
+                        full_text += self.__clean_text(tr.text) + "\n"
                 elif child.name == "hr":
                     if consolidated and skip:
                         continue
                     full_text += "[SEP]"
 
-        full_text = full_text.replace("\n", " ")
+        # full_text = full_text.replace("\n", " ")
         full_text = full_text.replace("◄", "")
         full_text = (
             full_text.split("[SEP]", maxsplit=1)[1].replace("[SEP]", "")
@@ -255,6 +256,7 @@ class EURlexScraper:
         )
         full_text = sub("►\D\d+", "", full_text)
         full_text = sub(" +", " ", full_text).strip()
+        full_text = sub("\n+", "\n", full_text).strip()
 
         return eurovoc_classifiers, full_text
 
