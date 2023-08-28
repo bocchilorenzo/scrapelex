@@ -8,6 +8,7 @@ if __name__ == "__main__":
     parser.add_argument("--language", type=str, default="it", help="Language to scrape.")
     parser.add_argument("--year", type=str, default="", help="Years to scrape.")
     parser.add_argument("--category", type=str, default="", help="Categories to scrape.")
+    parser.add_argument("--label_types", type=str, default="TC", help="Label types to scrape. Use comma separated values for multiple types. Accepted values: TC (Thesaurus Concept), MT (Micro Thesaurus), DO (Domain).")
     parser.add_argument("--save_data", default=False, action="store_true", help="Whether to save the scraped data in a JSON file for the year.")
     parser.add_argument("--json_folder", metavar="FOLDER", default=None, help="JSON folder where to save data.")
     parser.add_argument("--save_html", default=False, action="store_true", help="Whether to save the html of each scraped page in its own gzipped file.")
@@ -56,21 +57,21 @@ if __name__ == "__main__":
                 args.cpu_count = 1
             if args.year == "":
                 raise BaseException("You must specify at least a year when extracting from local files.")
-            if len(args.year.split(",")) != 2:
-                raise BaseException("You must specify a range of years when extracting from local files. Example: --year 2010,2020 will scrape all the documents from 2010 to 2020 (included).")
             documents = scraper.get_documents_local_multiprocess(
                 directory=args.directory,
                 json_folder=args.json_folder,
                 cpu_count=args.cpu_count,
-                years=args.year.split(","),
+                years=args.year,
                 language=args.language,
+                label_types=args.label_types,
             )
         else:
             scraper.get_documents_local(
                 directory=args.directory,
                 json_folder=args.json_folder,
-                years=args.year.split(","),
+                years=args.year,
                 language=args.language,
+                label_types=args.label_types,
             )
     else:
         if args.year == "":
@@ -84,6 +85,7 @@ if __name__ == "__main__":
                     max_retries=args.max_retries,
                     sleep_time=args.sleep_time,
                     skip_existing=not(args.clean),
+                    label_types=args.label_types,
                 )
             else:
                 documents = scraper.get_documents_by_category(
@@ -95,12 +97,13 @@ if __name__ == "__main__":
                     max_retries=args.max_retries,
                     sleep_time=args.sleep_time,
                     skip_existing=not(args.clean),
+                    label_types=args.label_types,
                 )
         else:
             if args.category != "":
                 raise("You can't specify both a category and a year.")
             documents = scraper.get_documents_by_year(
-                years=args.year.split(","),
+                years=args.year,
                 save_data=args.save_data,
                 save_html=args.save_html,
                 directory=args.directory,
@@ -108,5 +111,6 @@ if __name__ == "__main__":
                 max_retries=args.max_retries,
                 sleep_time=args.sleep_time,
                 skip_existing=not(args.clean),
+                label_types=args.label_types,
             )
     

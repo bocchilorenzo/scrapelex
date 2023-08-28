@@ -14,16 +14,17 @@ pip install -r requirements.txt
 Clone the repository and run the `main.py` file. By default, if no year or category is given, it will scrape year by year starting from current year - 1 and going back to 1800. The available arguments are:
 
 ```
-usage: main.py [-h] [--language LANGUAGE] [--year YEAR] [--category CATEGORY] [--save_data] [--save_html] [--resume] [--clean] [--get_number] [--scrape_local]
-               [--multi_core] [--cpu_count CPU_COUNT] [--directory DIRECTORY] [--max_retries MAX_RETRIES] [--sleep_time SLEEP_TIME] [--log_level LOG_LEVEL]   
-               [--get_categories] [--get_languages] [--get_years]
+usage: main.py [-h] [--language LANGUAGE] [--year YEAR] [--category CATEGORY] [--label_types LABEL_TYPES] [--save_data] [--json_folder FOLDER] [--save_html] [--resume] [--clean] [--get_number] [--scrape_local] [--multi_core] [--cpu_count CPU_COUNT] [--directory DIRECTORY] [--max_retries MAX_RETRIES] [--sleep_time SLEEP_TIME] [--log_level LOG_LEVEL] [--get_categories] [--get_languages] [--get_years]
 
 optional arguments:
   -h, --help            show this help message and exit
   --language LANGUAGE   Language to scrape. (default: it)
   --year YEAR           Years to scrape. (default: )
   --category CATEGORY   Categories to scrape. (default: )
-  --save_data           Whether to save the scraped data in a json file for the year. (default: False)
+  --label_types LABEL_TYPES
+                        Label types to scrape. Use comma separated values for multiple types. Accepted values: TC (Thesaurus Concept), MT (Micro Thesaurus), DO (Domain). (default: TC)
+  --save_data           Whether to save the scraped data in a JSON file for the year. (default: False)
+  --json_folder FOLDER  JSON folder where to save data. (default: None)
   --save_html           Whether to save the html of each scraped page in its own gzipped file. (default: False)
   --resume              Use a previous checkpoint to resume scraping. (default: False)
   --clean               Scrape all the documents, ignoring the ones already downloaded. (default: False)
@@ -33,7 +34,7 @@ optional arguments:
   --cpu_count CPU_COUNT
                         Number of cores to use for local scraping in case of multicore. (default: 2)
   --directory DIRECTORY
-                        Directory to save the scraped data, or to process in case of local scraping. (default: ./eurlexdata/)
+                        Directory for the saved data. (default: ./eurlexdata/)
   --max_retries MAX_RETRIES
                         Maximum number of retries for each page, both search pages and individual documents. (default: 10)
   --sleep_time SLEEP_TIME
