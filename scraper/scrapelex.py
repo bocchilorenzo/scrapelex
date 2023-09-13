@@ -113,7 +113,11 @@ class EURlexScraper:
                 ] = "(".join(splitted_line[:-1]).strip()
             del splitted_line
 
-        with open("label_mappings.json", "r", encoding="utf-8") as file:
+        with open(
+            path.join(path.dirname(path.realpath(__file__)), "label_mapping.json"),
+            "r",
+            encoding="utf-8",
+        ) as file:
             self.label_mappings = json.load(file)
 
     def __validate_languages(self, lang):
@@ -174,7 +178,7 @@ class EURlexScraper:
         :param label_types: label types to scrape.
         :return: list of eurovoc classifiers and full text of the document
         """
-        page_html = sub(r"<br[/ ]*>", "\n", page_html.decode("utf-8"))
+        page_html = sub(r"<br[/ ]*>", "\n", page_html)
         soup = BeautifulSoup(page_html, "lxml")
         eurovoc_classifiers = []
         full_text = ""
@@ -202,7 +206,7 @@ class EURlexScraper:
                 for classifier in eurovoc_classifiers:
                     if classifier in self.label_mappings:
                         do.add(self.label_mappings[classifier][:2] + "_do")
-        
+
         eurovoc_classifiers = list(tc.union(mt).union(do))
 
         text_element = None
@@ -284,7 +288,13 @@ class EURlexScraper:
         return eurovoc_classifiers, full_text
 
     def __get_full_document(
-        self, endpoint, max_retries=10, log_errors=True, directory="./", scrape=True, label_types="TC"
+        self,
+        endpoint,
+        max_retries=10,
+        log_errors=True,
+        directory="./",
+        scrape=True,
+        label_types="TC",
     ):
         """
         Extract information from an individual document page from EUR-lex
@@ -322,7 +332,9 @@ class EURlexScraper:
                 keep_trying = False
                 page_html = self.r.text
                 if scrape:
-                    eurovoc_classifiers, full_text = self.__scrape_page(page_html, label_types)
+                    eurovoc_classifiers, full_text = self.__scrape_page(
+                        page_html, label_types
+                    )
 
             else:
                 if self.r.status_code == 404:
@@ -508,11 +520,9 @@ class EURlexScraper:
                     skip_count = 0
                     for doc_id, doc_info in documents_in_page.items():
                         documents[term][doc_id] = doc_info
-                        documents[term][doc_id][
-                            "eurovoc_classifiers"
-                        ] = []
+                        documents[term][doc_id]["eurovoc_classifiers"] = []
                         documents[term][doc_id]["full_text"] = ""
-                        
+
                         if skip_existing and path.exists(
                             f"{directory}/docsHTML/{dirterm}/{doc_id}.html.gz"
                         ):
@@ -616,7 +626,9 @@ class EURlexScraper:
                 f"- Average number of Eurovoc classifiers per document: {sum([len(documents[term][doc]['eurovoc_classifiers']) for doc in documents[term]])/len(documents[term]) if len(documents[term]) > 0 else 0}"
             )
             if save_data:
-                with gzip.open(f"{directory}/{dirterm}.json.gz", "wt", encoding="utf-8") as fp:
+                with gzip.open(
+                    f"{directory}/{dirterm}.json.gz", "wt", encoding="utf-8"
+                ) as fp:
                     json.dump(documents[term], fp, ensure_ascii=False)
 
                 del documents[term]
@@ -813,8 +825,12 @@ class EURlexScraper:
         makedirs(directory, exist_ok=True)
         self.__set_cookies()
 
-        years = self.year_list if years == "" else [str(year) for year in PageRange(years).pages]
-        
+        years = (
+            self.year_list
+            if years == ""
+            else [str(year) for year in PageRange(years).pages]
+        )
+
         search_term = "&DD_YEAR="
         resume_params = None
 
@@ -892,7 +908,9 @@ class EURlexScraper:
         to_rtn[doc_id]["full_text"] = full_text
         return to_rtn
 
-    def get_documents_local(self, directory, json_folder=None, years=[], language="", label_types="TC"):
+    def get_documents_local(
+        self, directory, json_folder=None, years=[], language="", label_types="TC"
+    ):
         """
         Scrape information from local files
 
@@ -906,7 +924,7 @@ class EURlexScraper:
             raise ValueError("No directory specified")
         if not path.isdir(directory):
             raise ValueError("Directory not found")
-        
+
         out_dir = path.join(directory, language, "extracted")
         if json_folder:
             out_dir = path.join(json_folder, language)
@@ -915,7 +933,7 @@ class EURlexScraper:
         for year in years:
             documents = {}
 
-            dir_scrape = path.join(directory, language, 'docsHTML', str(year))
+            dir_scrape = path.join(directory, language, "docsHTML", str(year))
 
             if not path.isdir(dir_scrape):
                 print(f"Directory {dir_scrape} not found. Skipping...")
@@ -923,7 +941,9 @@ class EURlexScraper:
             tqdm.write(f"Scraping documents in {dir_scrape}...")
             for file in tqdm(listdir(dir_scrape)):
                 if file.endswith(".gz"):
-                    documents.update(self.scrape_local_core((file, dir_scrape, label_types)))
+                    documents.update(
+                        self.scrape_local_core((file, dir_scrape, label_types))
+                    )
 
             tqdm.write(
                 f"Scraping completed.\n- Documents scraped: {len(documents)}\n- Documents without eurovoc classifiers: {len([doc for doc in documents if len(documents[doc]['eurovoc_classifiers']) == 0])}\n- Average number of Eurovoc classifiers per document: {sum([len(documents[doc]['eurovoc_classifiers']) for doc in documents])/len(documents)}"
@@ -936,7 +956,15 @@ class EURlexScraper:
             ) as fp:
                 json.dump(documents, fp, ensure_ascii=False)
 
-    def get_documents_local_multiprocess(self, directory, json_folder=None, cpu_count=2, years=[], language="", label_types="TC"):
+    def get_documents_local_multiprocess(
+        self,
+        directory,
+        json_folder=None,
+        cpu_count=2,
+        years=[],
+        language="",
+        label_types="TC",
+    ):
         """
         Scrape information from local files using multiprocessing
 
@@ -951,7 +979,7 @@ class EURlexScraper:
             raise ValueError("No directory specified")
         if not path.isdir(directory):
             raise ValueError("Directory not found")
-        
+
         out_dir = path.join(directory, language, "extracted")
         if json_folder:
             out_dir = path.join(json_folder, language)
@@ -960,14 +988,16 @@ class EURlexScraper:
         for year in years:
             documents = {}
 
-            dir_scrape = path.join(directory, language, 'docsHTML', str(year))
+            dir_scrape = path.join(directory, language, "docsHTML", str(year))
 
             if not path.isdir(dir_scrape):
                 print(f"Directory {dir_scrape} not found. Skipping...")
 
             tqdm.write(f"Scraping documents in {dir_scrape}...")
             inputs = [
-                (file, dir_scrape, label_types) for file in listdir(dir_scrape) if file.endswith(".gz")
+                (file, dir_scrape, label_types)
+                for file in listdir(dir_scrape)
+                if file.endswith(".gz")
             ]
 
             with Pool(cpu_count) as p:
