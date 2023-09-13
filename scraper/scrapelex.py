@@ -902,7 +902,7 @@ class EURlexScraper:
             ),
             "link": f"https://eur-lex.europa.eu/legal-content/AUTO/?uri={doc_id_generator[0]}:{doc_id}",
         }
-        eurovoc_classifiers, full_text = self.__scrape_page(page_html, label_types)
+        eurovoc_classifiers, full_text = self.__scrape_page(page_html.decode("utf-8"), label_types)
 
         to_rtn[doc_id]["eurovoc_classifiers"] = eurovoc_classifiers
         to_rtn[doc_id]["full_text"] = full_text
@@ -929,6 +929,12 @@ class EURlexScraper:
         if json_folder:
             out_dir = path.join(json_folder, language)
         makedirs(out_dir, exist_ok=True)
+
+        years = (
+            self.year_list
+            if years == ""
+            else [str(year) for year in PageRange(years).pages]
+        )
 
         for year in years:
             documents = {}
@@ -985,10 +991,16 @@ class EURlexScraper:
             out_dir = path.join(json_folder, language)
         makedirs(out_dir, exist_ok=True)
 
+        years = (
+            self.year_list
+            if years == ""
+            else [str(year) for year in PageRange(years).pages]
+        )
+
         for year in years:
             documents = {}
 
-            dir_scrape = path.join(directory, language, "docsHTML", str(year))
+            dir_scrape = path.join(directory, language, "docsHTML", year)
 
             if not path.isdir(dir_scrape):
                 print(f"Directory {dir_scrape} not found. Skipping...")
