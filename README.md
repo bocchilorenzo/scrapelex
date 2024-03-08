@@ -1,5 +1,5 @@
-# scrapelex
-Multilingual EURlex scraper. This is a Python package that allows you to scrape the EURlex website and download (almost) all the documents in a given language. It is based on the [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) library.
+# ScrapeLex
+Multilingual EUR-Lex scraper. This is a Python package that allows you to scrape the EUR-Lex website and download (almost) all the documents in a given language. It is based on the [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) library.
 
 ## Requirements
 
